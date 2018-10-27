@@ -21,6 +21,28 @@ output: list of sentences, each sentence is a list of (word,tag) pairs.
         E.g., [[(word1, tag1), (word2, tag2)], [(word3, tag3), (word4, tag4)]]
 '''
 def baseline(train, test):
+    wordTagCountDict = {} #how many times each word occurs with each tag in training
+    for pair in train:
+        if pair in wordTagCountDict:
+            wordTagCountDict[pair] += 1 #counts each tuple's frequency
+        else:
+            wordTagCountDict[pair] = 1 #counts each tuple's frequency
+    for word in test:
+        oneWordDict = {} #how many times a single word occurs with different tags
+        for wt_combo in wordTagCountDict:
+            if (wt_combo[0] == word):
+                if word in oneWordDict:
+                    oneWordDict[wt_combo] += 1
+                else:
+                    oneWordDict[wt_combo] = 1
+        for wt_count_pair in oneWordDict:
+            freqTag = ""
+            freqTagCount = 0
+            if (oneWordDict[wt_count_pair] > freqTagCount):
+                freqTagCount = oneWordDict[wt_count_pair]
+                freqTag = wt_count_pair[1]
+            newPair = (wt_count_pair[0], freqTag)
+            predicts.append(newPair)
     predicts = []
     return predicts
 
