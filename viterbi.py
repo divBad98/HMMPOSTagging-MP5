@@ -20,8 +20,12 @@ input:  training data (list of sentences, with tags on the words)
 output: list of sentences, each sentence is a list of (word,tag) pairs. 
         E.g., [[(word1, tag1), (word2, tag2)], [(word3, tag3), (word4, tag4)]]
 '''
+
+import math
+
 def baseline(train, test):
     wordTagCountDict = {} #how many times each word occurs with each tag in training
+    predicts = []
     for pair in train:
         if pair in wordTagCountDict:
             wordTagCountDict[pair] += 1 #counts each tuple's frequency
@@ -43,7 +47,6 @@ def baseline(train, test):
                 freqTag = wt_count_pair[1]
             newPair = (wt_count_pair[0], freqTag)
             predicts.append(newPair)
-    predicts = []
     return predicts
 
 '''
@@ -54,5 +57,28 @@ output: list of sentences with tags on the words
         E.g., [[(word1, tag1), (word2, tag2)], [(word3, tag3), (word4, tag4)]]
 '''
 def viterbi(train, test):
+    wordTagCountDict = {}
+    tagCountDict = {}
+    tagTransitionCountDict = {}
+    tagTransitionProbDict = {}
     predicts = []
+    prevPair = ()
+    for pair in train:
+        curr_transition = (prevPair, pair)
+        if pair in wordTagCountDict:
+            wordTagCountDict[pair] += 1 #counts each tuple's frequency
+        else:
+            wordTagCountDict[pair] = 1 #counts each tuple's frequency
+        if pair in tagCountDict:
+            tagCountDict[pair[1]] += 1 #counts each tuple's frequency
+        else:
+            tagCountDict[pair[1]] = 1 #counts each tuple's frequency
+        if curr_transition in tagTransitionCountDict:
+            tagTransitionCountDict[curr_transition] += 1
+        else:
+            tagTransitionCountDict[curr_transition] = 1
+        for key, value in tagTransitionCountDict:
+            tagTransitionProbDict[key] = math.log(value/len(tagTransitionCountDict.keys()), 10)
+        prevPair = pair
+        predicts.append(prevPair)
     return predicts
