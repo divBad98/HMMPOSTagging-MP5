@@ -24,7 +24,10 @@ output: list of sentences, each sentence is a list of (word,tag) pairs.
 import math
 
 def baseline(train, test):
-    wordTagCountDict = {} #how many times each word occurs with each tag in training
+    #how many times each word occurs with each tag in training
+    #keys will be words
+    #values will be list of 2-lists of format [tag_count, tag]
+    wordTagCountDict = {}     
     totalTagCountDict = {} #count the total occurrences of each tag and use most seen for the unknown words
     predicts = []
 
@@ -49,12 +52,11 @@ def baseline(train, test):
                 wordTagCountDict[pair[0]] = [ [1, pair[1]] ]
 
     #Map each word to its most used POS tag
+    #wordTagCountDict will now have key->word and value->tag_string
     for key in wordTagCountDict:
         max_tag_count = None
         for tag_count in wordTagCountDict[key]:
-            if max_tag_count == None:
-                max_tag_count = tag_count
-            elif max_tag_count[0] < tag_count[0]:
+            if max_tag_count == None or max_tag_count[0] < tag_count[0]:
                 max_tag_count = tag_count
         wordTagCountDict[key] = max_tag_count[1]
 
