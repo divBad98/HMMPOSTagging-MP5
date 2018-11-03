@@ -25,28 +25,56 @@ import math
 
 def baseline(train, test):
     wordTagCountDict = {} #how many times each word occurs with each tag in training
+    totalTagCountDict = {} #count the total occurrences of each tag and use most seen for the unknown words
     predicts = []
-    for pair in train:
-        if pair in wordTagCountDict:
-            wordTagCountDict[pair] += 1 #counts each tuple's frequency
-        else:
-            wordTagCountDict[pair] = 1 #counts each tuple's frequency
-    for word in test:
-        oneWordDict = {} #how many times a single word occurs with different tags
-        for wt_combo in wordTagCountDict:
-            if (wt_combo[0] == word):
-                if word in oneWordDict:
-                    oneWordDict[wt_combo] += 1
-                else:
-                    oneWordDict[wt_combo] = 1
-        for wt_count_pair in oneWordDict:
-            freqTag = ""
-            freqTagCount = 0
-            if (oneWordDict[wt_count_pair] > freqTagCount):
-                freqTagCount = oneWordDict[wt_count_pair]
-                freqTag = wt_count_pair[1]
-            newPair = (wt_count_pair[0], freqTag)
-            predicts.append(newPair)
+
+    #Count instances of (word, tag)
+    for sentence in train:
+        for pair in sentence:
+            if pair[1] in totalTagCountDict:
+                totalTagCountDict[pair[1]] += 1
+            else:
+                totalTagCountDict[pair[1]] = 1
+
+            found_tag = False
+            if pair[0] in wordTagCountDict:
+                for tag_count in wordTagCountDict[pair[0]]:
+                    if tag_count[1] == pair[1]:
+                        found_tag = True
+                        tag_count[0] += 1
+                        break
+                if not found_tag: 
+                    wordTagCountDict[pair[0]].append([1, pair[1]])
+            else:
+                wordTagCountDict[pair[0]] = [ [1, pair[1]] ]
+
+    #Map each word to its most used POS tag
+    for key in wordTagCountDict:
+        max_tag_count = None
+        for tag_count in wordTagCountDict[key]:
+            if max_tag_count == None:
+                max_tag_count = tag_count
+            elif max_tag_count[0] < tag_count[0]:
+                max_tag_count = tag_count
+        wordTagCountDict[key] = max_tag_count[1]
+
+    #Find the most used tag for unknowns
+    max_tag_count_unk = None
+    for tag, count in totalTagCountDict.items():
+        if max_tag_count_unk == None or max_tag_count_unk[1] < count:
+            max_tag_count_unk = (tag, count)
+
+    max_tag = max_tag_count_unk[0]
+
+    #create dev set
+    for i, sentence in enumerate(test):
+        predicts.append([])
+        for word in sentence:
+            if word in wordTagCountDict:
+                predicts[i].append( (word, wordTagCountDict[word]) )
+            else:
+                predicts[i].append( (word, max_tag) )
+
     return predicts
 
 '''
@@ -82,3 +110,19 @@ def viterbi(train, test):
         prevPair = pair
         predicts.append(prevPair)
     return predicts
+
+
+def print_top(to_print, n):
+    i = 0
+    for key, val in to_print.items():
+        print( str(key) + ", " + str(val))
+        i += 1
+        if(i == n):
+            break
+
+def laplace_smooth(data_set, N, alpha, V):
+    for key, value in data_set.items():
+        data_set[key] = (value + alpha) / (N + alpha * V)
+
+    #return unknown
+    return alpha / (N + alpha * V)
